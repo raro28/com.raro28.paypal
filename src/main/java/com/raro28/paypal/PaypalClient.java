@@ -17,7 +17,7 @@ public class PaypalClient {
         this.client = new PayPalHttpClient(this.environment);
     }
 
-    public PayPalHttpClient getClient(){
+    public PayPalHttpClient getClient() {
         return this.client;
     }
 }
