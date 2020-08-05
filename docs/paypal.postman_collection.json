@@ -1,0 +1,837 @@
+{
+	"info": {
+		"_postman_id": "2f88ae44-9ea8-4b67-85f3-9d236fe8cc08",
+		"name": "paypal",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "token",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "9c1484cd-7aa6-4bd4-9c59-c0837969cfe4",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "da157dcd-f550-48f6-9752-29c576f90897",
+								"exec": [
+									"var response = pm.response.json();",
+									"pm.environment.set(\"auth.access_token\", response.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{auth.password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{auth.username}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://{{environment}}.paypal.com/v1/oauth2/token",
+							"protocol": "https",
+							"host": [
+								"{{environment}}",
+								"paypal",
+								"com"
+							],
+							"path": [
+								"v1",
+								"oauth2",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "checkout",
+			"item": [
+				{
+					"name": "orders",
+					"item": [
+						{
+							"name": "create order [AUTHORIZE INTENT]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "578969f8-cce3-4c7c-afe2-0916f652c553",
+										"exec": [
+											"var response = pm.response.json();",
+											"pm.environment.set('orders.created.id', response.id);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "1ce68483-3d22-4955-aa7a-43328d80480a",
+										"exec": [
+											"let id = pm.variables.replaceIn('{{$timestamp}}');",
+											"",
+											"pm.environment.set('orders.create.reference_id', `reference_${id}`);",
+											"pm.environment.set('orders.create.soft_descriptor', `soft_${id}`);",
+											"pm.environment.set('orders.create.custom_id', `custom_${id}`);",
+											"pm.environment.set('orders.create.invoice_id', `invoice_${id}`);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Prefer",
+										"value": "return={{prefer.return}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"intent\": \"AUTHORIZE\",\n    \"payer\": {\n        \"name\": {\n            \"given_name\": \"{{payer.given_name}}\",\n            \"surname\": \"{{payer.surname}}\"\n        },\n        \"email_address\": \"{{payer.email_address}}\",\n        \"birth_date\": \"1900-01-01\",\n        \"address\": {\n            \"address_line_1\": \"street\",\n            \"address_line_2\": \"number\",\n            \"admin_area_1\": \"area 1\",\n            \"admin_area_2\": \"area 2\",\n            \"postal_code\": \"04450\",\n            \"country_code\": \"MX\"\n        }\n    },\n    \"purchase_units\": [\n        {\n            \"reference_id\": \"{{orders.create.reference_id}}\",\n            \"amount\": {\n                \"currency_code\": \"{{orders.create.currency}}\",\n                \"value\": \"121.00\",\n                \"breakdown\": {\n                    \"item_total\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"100.00\"\n                    },\n                    \"shipping\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"handling\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"tax_total\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"20.00\"\n                    },\n                    \"insurance\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"shipping_discount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"discount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    }\n                }\n            },\n            \"payee\": {\n                \"email_address\": \"{{payee.email_address}}\",\n                \"merchant_id\": \"{{payee.merchant_id}}\"\n            },\n            \"description\": \"{{orders.create.description}}\",\n            \"custom_id\": \"{{orders.create.custom_id}}\",\n            \"invoice_id\": \"{{orders.create.invoice_id}}\",\n            \"soft_descriptor\": \"{{orders.create.soft_descriptor}}\",\n            \"items\": [\n                {\n                    \"name\": \"demo item\",\n                    \"unit_amount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"50.00\"\n                    },\n                    \"tax\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"10.00\"\n                    },\n                    \"quantity\": \"2\",\n                    \"description\": \"demo item description\",\n                    \"sku\": \"demo sku\",\n                    \"category\": \"{{orders.create.category}}\"\n                }\n            ],\n            \"shipping\": {\n                \"name\": {\n                    \"full_name\": \"{{payer.given_name}} {{payer.surname}}\"\n                },\n                \"address\": {\n                    \"address_line_1\": \"street\",\n                    \"address_line_2\": \"number\",\n                    \"admin_area_1\": \"area 1\",\n                    \"admin_area_2\": \"area 2\",\n                    \"postal_code\": \"04450\",\n                    \"country_code\": \"MX\"\n                }\n            }\n        }\n    ],\n    \"application_context\": {\n        \"brand_name\": \"{{orders.create.brand_name}}\",\n        \"locale\": \"{{orders.create.locale}}\",\n        \"landing_page\": \"{{orders.create.landing_page}}\",\n        \"shipping_preferences\": \"{{orders.create.shipping_preferences}}\",\n        \"user_action\": \"{{orders.create.user_action}}\",\n        \"payment_method\": {\n            \"payer_selected\": \"{{orders.create.payer_selected}}\",\n            \"payee_preferred\": \"{{orders.create.payee_preferred}}\"\n        },\n        \"return_url\": \"{{orders.create.return_url}}\",\n        \"cancel_url\": \"{{orders.create.cancel_url}}\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders"
+									]
+								},
+								"description": "Cannot have a payment_instruction. Add on capture authorization."
+							},
+							"response": []
+						},
+						{
+							"name": "create order [CAPTURE intent]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "5ceb1b37-9950-4aa3-924d-b4149580e359",
+										"exec": [
+											"var response = pm.response.json();",
+											"pm.environment.set('orders.created.id', response.id);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "dc04e88f-cb9f-4cb6-8600-5b9f92d22c86",
+										"exec": [
+											"let id = pm.variables.replaceIn('{{$timestamp}}');",
+											"",
+											"pm.environment.set('orders.create.reference_id', `reference_${id}`);",
+											"pm.environment.set('orders.create.soft_descriptor', `soft_${id}`);",
+											"pm.environment.set('orders.create.custom_id', `custom_${id}`);",
+											"pm.environment.set('orders.create.invoice_id', `invoice_${id}`);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Prefer",
+										"type": "text",
+										"value": "return={{prefer.return}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"intent\": \"CAPTURE\",\n    \"payer\": {\n        \"name\": {\n            \"given_name\": \"{{payer.given_name}}\",\n            \"surname\": \"{{payer.surname}}\"\n        },\n        \"email_address\": \"{{payer.email_address}}\",\n        \"birth_date\": \"1900-01-01\",\n        \"address\": {\n            \"address_line_1\": \"street\",\n            \"address_line_2\": \"number\",\n            \"admin_area_1\": \"area 1\",\n            \"admin_area_2\": \"area 2\",\n            \"postal_code\": \"04450\",\n            \"country_code\": \"MX\"\n        }\n    },\n    \"purchase_units\": [\n        {\n            \"reference_id\": \"{{orders.create.reference_id}}\",\n            \"amount\": {\n                \"currency_code\": \"{{orders.create.currency}}\",\n                \"value\": \"121.00\",\n                \"breakdown\": {\n                    \"item_total\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"100.00\"\n                    },\n                    \"shipping\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"handling\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"tax_total\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"20.00\"\n                    },\n                    \"insurance\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"shipping_discount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"discount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    }\n                }\n            },\n            \"payee\": {\n                \"email_address\": \"{{payee.email_address}}\",\n                \"merchant_id\": \"{{payee.merchant_id}}\"\n            },\n            \"payment_instruction\": {\n                \"platform_fees\": [\n                    {\n                        \"amount\": {\n                            \"currency_code\": \"{{orders.create.currency}}\",\n                            \"value\": \"1.00\"\n                        },\n                        \"payee\": {\n                            \"email_address\": \"{{payee.email_address}}\",\n                            \"merchant_id\": \"{{payee.merchant_id}}\"\n                        }\n                    }\n                ],\n                \"disbursement_mode\": \"{{orders.create.disbursement_mode}}\"\n            },\n            \"description\": \"{{orders.create.description}}\",\n            \"custom_id\": \"{{orders.create.custom_id}}\",\n            \"invoice_id\": \"{{orders.create.invoice_id}}\",\n            \"soft_descriptor\": \"{{orders.create.soft_descriptor}}\",\n            \"items\": [\n                {\n                    \"name\": \"demo item\",\n                    \"unit_amount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"50.00\"\n                    },\n                    \"tax\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"10.00\"\n                    },\n                    \"quantity\": \"2\",\n                    \"description\": \"demo item description\",\n                    \"sku\": \"demo sku\",\n                    \"category\": \"{{orders.create.category}}\"\n                }\n            ],\n            \"shipping\": {\n                \"name\": {\n                    \"full_name\": \"{{payer.given_name}} {{payer.surname}}\"\n                },\n                \"address\": {\n                    \"address_line_1\": \"street\",\n                    \"address_line_2\": \"number\",\n                    \"admin_area_1\": \"area 1\",\n                    \"admin_area_2\": \"area 2\",\n                    \"postal_code\": \"04450\",\n                    \"country_code\": \"MX\"\n                }\n            }\n        }\n    ],\n    \"application_context\": {\n        \"brand_name\": \"{{orders.create.brand_name}}\",\n        \"locale\": \"{{orders.create.locale}}\",\n        \"landing_page\": \"{{orders.create.landing_page}}\",\n        \"shipping_preferences\": \"{{orders.create.shipping_preferences}}\",\n        \"user_action\": \"{{orders.create.user_action}}\",\n        \"payment_method\": {\n            \"payer_selected\": \"{{orders.create.payer_selected}}\",\n            \"payee_preferred\": \"{{orders.create.payee_preferred}}\"\n        },\n        \"return_url\": \"{{orders.create.return_url}}\",\n        \"cancel_url\": \"{{orders.create.cancel_url}}\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update order [replace info]",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "330196de-6517-49ae-bd4f-b6eb7666e154",
+										"exec": [
+											"let id = pm.variables.replaceIn('{{$timestamp}}');",
+											"",
+											"pm.environment.set('orders.create.custom_id', `replaced_custom_${id}`);",
+											"pm.environment.set('orders.create.invoice_id', `replaced_invoice_${id}`);",
+											"pm.environment.set('orders.create.soft_descriptor', `rep_${id}`);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "6b712ff9-a05b-4652-8a5d-df5ef234466b",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "[\n    {\n        \"op\": \"replace\",\n        \"path\": \"/intent\",\n        \"value\": \"CAPTURE\"\n    },\n    {\n        \"op\": \"replace\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/custom_id\",\n        \"value\": \"{{orders.create.custom_id}}\"\n    },\n    {\n        \"op\": \"replace\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/description\",\n        \"value\": \"Replaced description for {{orders.create.reference_id}}\"\n    },\n    {\n        \"op\": \"replace\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/payee/email_address\",\n        \"value\": \"{{payee.email_address}}\"\n    },\n    {\n        \"op\": \"replace\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/shipping/name\",\n        \"value\": {\n            \"full_name\": \"replaced {{payer.given_name}} {{payer.surname}}\"\n        }\n    },\n    {\n        \"op\": \"replace\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/shipping/address\",\n        \"value\": {\n            \"address_line_1\": \"replaced street\",\n            \"address_line_2\": \"replaced number\",\n            \"admin_area_1\": \"replaced area 1\",\n            \"admin_area_2\": \"replaced area 2\",\n            \"postal_code\": \"04450\",\n            \"country_code\": \"MX\"\n        }\n    },\n    {\n        \"op\": \"replace\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/soft_descriptor\",\n        \"value\": \"{{orders.create.soft_descriptor}}\"\n    },\n    {\n        \"op\": \"replace\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/amount\",\n        \"value\": {\n            \"currency_code\": \"{{orders.create.currency}}\",\n            \"value\": \"121.00\",\n            \"breakdown\": {\n                \"item_total\": {\n                    \"currency_code\": \"{{orders.create.currency}}\",\n                    \"value\": \"100.00\"\n                },\n                \"shipping\": {\n                    \"currency_code\": \"{{orders.create.currency}}\",\n                    \"value\": \"1.00\"\n                },\n                \"handling\": {\n                    \"currency_code\": \"{{orders.create.currency}}\",\n                    \"value\": \"1.00\"\n                },\n                \"tax_total\": {\n                    \"currency_code\": \"{{orders.create.currency}}\",\n                    \"value\": \"20.00\"\n                },\n                \"insurance\": {\n                    \"currency_code\": \"{{orders.create.currency}}\",\n                    \"value\": \"1.00\"\n                },\n                \"shipping_discount\": {\n                    \"currency_code\": \"{{orders.create.currency}}\",\n                    \"value\": \"1.00\"\n                },\n                \"discount\": {\n                    \"currency_code\": \"{{orders.create.currency}}\",\n                    \"value\": \"1.00\"\n                }\n            }\n        }\n    },\n    {\n        \"op\": \"replace\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/invoice_id\",\n        \"value\": \"{{orders.create.invoice_id}}\"\n    }\n]",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders/{{orders.created.id}}",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders",
+										"{{orders.created.id}}"
+									]
+								},
+								"description": "cannot replaces these:\n\npurchase_units\n\npurchase_units[].payment_instruction\n\npurchase_units[].payment_instruction.disbursement_mode\n\npurchase_units[].payment_instruction.platform_fees"
+							},
+							"response": []
+						},
+						{
+							"name": "update order [remove info]",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "65ca91f2-038e-4580-9260-e673bfbaa664",
+										"exec": [
+											"let id = pm.variables.replaceIn('{{$timestamp}}');",
+											"",
+											"pm.environment.set('orders.create.custom_id', `replaced_custom_${id}`);",
+											"pm.environment.set('orders.create.invoice_id', `replaced_invoice_${id}`);",
+											"pm.environment.set('orders.create.soft_descriptor', `rep_${id}`);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "e0f68179-f976-4019-be78-9f13077e3977",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "[\n    {\n        \"op\": \"remove\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/custom_id\"\n    },\n    {\n        \"op\": \"remove\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/description\"\n    },\n    {\n        \"op\": \"remove\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/soft_descriptor\"\n    },\n    {\n        \"op\": \"remove\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/invoice_id\"\n        \n    }\n]",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders/{{orders.created.id}}",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders",
+										"{{orders.created.id}}"
+									]
+								},
+								"description": "Needs test:\n\npurchase_units[].payment_instruction.platform_fees"
+							},
+							"response": []
+						},
+						{
+							"name": "update order [add purchase_unit]",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "a3184f20-63f7-4722-9f90-6f819804f8e9",
+										"exec": [
+											"let id = pm.variables.replaceIn('{{$timestamp}}');",
+											"",
+											"pm.environment.set('orders.create.reference_id', `added_reference_${id}`);",
+											"pm.environment.set('orders.create.soft_descriptor', `add_${id}`);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "fc476242-f25d-4acf-aa4c-fbb247d647eb",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "[\n    {\n        \"op\": \"add\",\n        \"path\": \"/purchase_units\",\n        \"value\": {\n            \"reference_id\": \"{{orders.create.reference_id}}\",\n            \"amount\": {\n                \"currency_code\": \"{{orders.create.currency}}\",\n                \"value\": \"601.00\",\n                \"breakdown\": {\n                    \"item_total\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"500.00\"\n                    },\n                    \"shipping\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"handling\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"tax_total\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"100.00\"\n                    },\n                    \"insurance\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"shipping_discount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"discount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    }\n                }\n            },\n            \"payee\": {\n                \"email_address\": \"{{payee.email_address}}\",\n                \"merchant_id\": \"{{payee.merchant_id}}\"\n            },\n            \"payment_instruction\": {\n                \"platform_fees\": [\n                    {\n                        \"amount\": {\n                            \"currency_code\": \"{{orders.create.currency}}\",\n                            \"value\": \"1.00\"\n                        },\n                        \"payee\": {\n                            \"email_address\": \"{{payee.email_address}}\",\n                            \"merchant_id\": \"{{payee.merchant_id}}\"\n                        }\n                    }\n                ],\n                \"disbursement_mode\": \"{{orders.create.disbursement_mode}}\"\n            },\n            \"soft_descriptor\": \"{{orders.create.soft_descriptor}}\",\n            \"items\": [\n                {\n                    \"name\": \"added demo item\",\n                    \"unit_amount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"500.00\"\n                    },\n                    \"tax\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"100.00\"\n                    },\n                    \"quantity\": \"1\",\n                    \"description\": \"added demo item description\",\n                    \"sku\": \"added demo sku\",\n                    \"category\": \"{{orders.create.category}}\"\n                }\n            ]\n        }\n    }\n]",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders/{{orders.created.id}}",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders",
+										"{{orders.created.id}}"
+									]
+								},
+								"description": "shipping.{name, email_addres} gets added automatically\n\nWon't work if intent=AUTHORIZE."
+							},
+							"response": []
+						},
+						{
+							"name": "update order [add purchase_units info]",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "0be5a4c3-4482-4752-a83d-308401b6b2dc",
+										"exec": [
+											"let id = pm.variables.replaceIn('{{$timestamp}}');",
+											"",
+											"pm.environment.set('orders.create.custom_id', `added_custom_${id}`);",
+											"pm.environment.set('orders.create.invoice_id', `added_invoice_${id}`);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "3b096c1d-e5fc-413e-a015-b84863289ced",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "[\n    {\n        \"op\": \"add\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/custom_id\",\n        \"value\": \"{{orders.create.custom_id}}\"\n    },\n    {\n        \"op\": \"add\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/description\",\n        \"value\": \"added description for {{orders.create.reference_id}}\"\n    },\n    {\n        \"op\": \"add\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'/invoice_id\",\n        \"value\": \"{{orders.create.invoice_id}}\"\n    }\n]",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders/{{orders.created.id}}",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders",
+										"{{orders.created.id}}"
+									]
+								},
+								"description": "Cannot add these, they already exist.\n\npurchase_units[].shipping.name\npurchase_units[].shipping.address\n\nNeed test:\npurchase_units[].payment_instruction.platform_fees"
+							},
+							"response": []
+						},
+						{
+							"name": "update order [replace purchase_unit]",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "6db7c879-1099-4c17-a61f-664b7d320e85",
+										"exec": [
+											"let id = pm.variables.replaceIn('{{$timestamp}}');",
+											"",
+											"pm.environment.set('orders.create.custom_id', `replaced_custom_${id}`);",
+											"pm.environment.set('orders.create.invoice_id', `replaced_invoice_${id}`);",
+											"pm.environment.set('orders.create.soft_descriptor', `rep_${id}`);"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "dc107048-735d-4c55-a08f-8c9d5a6fcf32",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "[\n    {\n        \"op\": \"replace\",\n        \"path\": \"/purchase_units/@reference_id=='{{orders.create.reference_id}}'\",\n        \"value\": {\n            \"reference_id\": \"{{orders.create.reference_id}}\",\n            \"amount\": {\n                \"currency_code\": \"{{orders.create.currency}}\",\n                \"value\": \"121.00\",\n                \"breakdown\": {\n                    \"item_total\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"100.00\"\n                    },\n                    \"shipping\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"handling\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"tax_total\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"20.00\"\n                    },\n                    \"insurance\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"shipping_discount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    },\n                    \"discount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"1.00\"\n                    }\n                }\n            },\n            \"payee\": {\n                \"email_address\": \"{{payee.email_address}}\",\n                \"merchant_id\": \"{{payee.merchant_id}}\"\n            },\n            \"payment_instruction\": {\n                \"platform_fees\": [\n                    {\n                        \"amount\": {\n                            \"currency_code\": \"{{orders.create.currency}}\",\n                            \"value\": \"1.00\"\n                        },\n                        \"payee\": {\n                            \"email_address\": \"{{payee.email_address}}\",\n                            \"merchant_id\": \"{{payee.merchant_id}}\"\n                        }\n                    }\n                ],\n                \"disbursement_mode\": \"{{orders.create.disbursement_mode}}\"\n            },\n            \"description\": \"replaced {{orders.create.description}}\",\n            \"custom_id\": \"{{orders.create.custom_id}}\",\n            \"invoice_id\": \"{{orders.create.invoice_id}}\",\n            \"soft_descriptor\": \"{{orders.create.soft_descriptor}}\",\n            \"items\": [\n                {\n                    \"name\": \"replaced demo item\",\n                    \"unit_amount\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"50.00\"\n                    },\n                    \"tax\": {\n                        \"currency_code\": \"{{orders.create.currency}}\",\n                        \"value\": \"10.00\"\n                    },\n                    \"quantity\": \"2\",\n                    \"description\": \"replaced demo item description\",\n                    \"sku\": \"replaced demo sku\",\n                    \"category\": \"{{orders.create.category}}\"\n                }\n            ],\n            \"shipping\": {\n                \"name\": {\n                    \"full_name\": \"replaced {{payer.given_name}} {{payer.surname}}\"\n                },\n                \"address\": {\n                    \"address_line_1\": \"replaced street\",\n                    \"address_line_2\": \"replaced number\",\n                    \"admin_area_1\": \"replaced area 1\",\n                    \"admin_area_2\": \"replaced area 2\",\n                    \"postal_code\": \"replaced 04450\",\n                    \"country_code\": \"MX\"\n                }\n            }\n        }\n    }\n]",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders/{{orders.created.id}}",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders",
+										"{{orders.created.id}}"
+									]
+								},
+								"description": "cannot replaces these:\n\npurchase_units\n\npurchase_units[].payment_instruction\n\npurchase_units[].payment_instruction.disbursement_mode"
+							},
+							"response": []
+						},
+						{
+							"name": "get order",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders/{{orders.created.id}}",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders",
+										"{{orders.created.id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "capture order",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Prefer",
+										"value": "return={{prefer.return}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"token\": {\n        \"id\": \"{{orders.token_id}}\",\n        \"type\": \"{{orders.token_type}}\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders/{{orders.created.id}}/capture",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders",
+										"{{orders.created.id}}",
+										"capture"
+									]
+								},
+								"description": "Only one capture per order is allowed.\n\nOnly valid on order with CAPTURE intent or else return ACTION_DOES_NOT_MATCH_INTENT"
+							},
+							"response": []
+						},
+						{
+							"name": "authorize order",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "e0c16d36-4864-445f-8c4a-60dca80fc91a",
+										"exec": [
+											"var response = pm.response.json();",
+											"/*",
+											"* Assume:",
+											"* 1) one purchase_unit since orders with intent=AUTHORIZE only have one such element",
+											"* 2) one authorization for the purchase_unit",
+											"*/",
+											"pm.environment.set('authorizations.created.id', response.purchase_units[0].payments.authorizations[0].id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Prefer",
+										"value": "return={{prefer.return}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"token\": {\n        \"id\": \"{{orders.token_id}}\",\n        \"type\": \"{{orders.token_type}}\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/checkout/orders/{{orders.created.id}}/authorize",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"checkout",
+										"orders",
+										"{{orders.created.id}}",
+										"authorize"
+									]
+								},
+								"description": "Only one authorization per order is allowed.\n\nOnly valid on order with AUTHORIZE intent or else return ACTION_DOES_NOT_MATCH_INTENT"
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "payments",
+			"item": [
+				{
+					"name": "authorizations",
+					"item": [
+						{
+							"name": "get authorization",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/payments/authorizations/{{authorizations.created.id}}",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"payments",
+										"authorizations",
+										"{{authorizations.created.id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "capture authorization [partial]",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "13894a11-9124-47ca-b9ae-a8f120a19821",
+										"exec": [
+											"let id = pm.variables.replaceIn('{{$timestamp}}');",
+											"",
+											"pm.environment.set('authorizations.capture.invoice_id', `capture_invoice_${id}`);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Prefer",
+										"type": "text",
+										"value": "return={{prefer.return}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"invoice_id\": \"{{authorizations.capture.invoice_id}}\",\n    \"note_to_payer\": \"{{authorizations.capture.note_to_payer}}\",\n    \"amount\": {\n        \"currency_code\": \"{{orders.create.currency}}\",\n        \"value\": \"1.00\"\n    },\n    \"final_capture\": \"{{authorizations.capture.final_capture}}\",\n    \"payment_instruction\": {\n        \"platform_fees\": [\n            {\n                \"amount\": {\n                    \"currency_code\": \"{{orders.create.currency}}\",\n                    \"value\": \"1.00\"\n                },\n                \"payee\": {\n                    \"email_address\": \"{{payee.email_address}}\",\n                    \"merchant_id\": \"{{payee.merchant_id}}\"\n                }\n            }\n        ],\n        \"disbursement_mode\": \"{{orders.create.disbursement_mode}}\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/payments/authorizations/{{authorizations.created.id}}/capture",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"payments",
+										"authorizations",
+										"{{authorizations.created.id}}",
+										"capture"
+									]
+								},
+								"description": "Only if not voided"
+							},
+							"response": []
+						},
+						{
+							"name": "reauthorize",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Prefer",
+										"value": "return={{prefer.return}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"amount\": {\n        \"currency_code\": \"{{orders.create.currency}}\",\n        \"value\": \"{{authorizations.reauthorize.amount_value}}\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/payments/authorizations/{{authorizations.created.id}}/reauthorize",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"payments",
+										"authorizations",
+										"{{authorizations.created.id}}",
+										"reauthorize"
+									]
+								},
+								"description": "Only once from Day 4 to day 29\n\nOnly if not voided"
+							},
+							"response": []
+						},
+						{
+							"name": "void authorization",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "https://{{environment}}.paypal.com/v2/payments/authorizations/{{authorizations.created.id}}/void",
+									"protocol": "https",
+									"host": [
+										"{{environment}}",
+										"paypal",
+										"com"
+									],
+									"path": [
+										"v2",
+										"payments",
+										"authorizations",
+										"{{authorizations.created.id}}",
+										"void"
+									]
+								},
+								"description": "Only once"
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "captures",
+					"item": [],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{auth.access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "76376d39-c635-4d96-b082-9559ab16b230",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "f9074811-5dd7-43c7-b5c3-3ac725c719e4",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
